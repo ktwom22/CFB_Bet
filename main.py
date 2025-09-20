@@ -41,8 +41,17 @@ def fetch_sheet_data():
         df.columns = df.columns.str.strip().str.title()
 
         # Fill missing logos with placeholder
-        df['Away Logo'] = df['Away Logo'].fillna("https://via.placeholder.com/60x60.png?text=No+Logo")
-        df['Home Logo'] = df['Home Logo'].fillna("https://via.placeholder.com/60x60.png?text=No+Logo")
+        placeholder = "https://via.placeholder.com/60x60.png?text=No+Logo"
+        for col in ["Away Logo", "Home Logo"]:
+            if col in df.columns:
+                df[col] = df[col].fillna(placeholder)
+            else:
+                df[col] = placeholder
+
+        # Fill missing spreads with empty string
+        for col in ["Away Spread", "Home Spread", "Predicted Outcome"]:
+            if col not in df.columns:
+                df[col] = ""
 
         cache_data = df
         cache_time = now
@@ -65,55 +74,21 @@ def index():
     <head>
         <title>CFB Predicted Matchups</title>
         <style>
-            body {
-                font-family: Arial, sans-serif;
-                padding: 20px;
-                background-color: #f0f2f5;
-            }
-            h2 {
-                text-align: center;
-                margin-bottom: 30px;
-            }
+            body { font-family: Arial, sans-serif; padding: 20px; background-color: #f0f2f5; }
+            h2 { text-align: center; margin-bottom: 30px; }
             .matchup-card {
-                background-color: #fff;
-                border-radius: 12px;
-                padding: 15px 20px;
+                background-color: #fff; border-radius: 12px; padding: 15px 20px;
                 box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
+                display: flex; justify-content: space-between; align-items: center;
                 margin-bottom: 15px;
             }
-            .team {
-                display: flex;
-                flex-direction: column;
-                align-items: center;
-                width: 45%;
-            }
-            .team img {
-                height: 60px;
-                width: 60px;
-                object-fit: contain;
-                margin-bottom: 5px;
-            }
-            .spread {
-                font-size: 14px;
-                color: #555;
-            }
-            .outcome {
-                font-weight: bold;
-                font-size: 16px;
-                color: #333;
-            }
+            .team { display: flex; flex-direction: column; align-items: center; width: 45%; }
+            .team img { height: 60px; width: 60px; object-fit: contain; margin-bottom: 5px; }
+            .spread { font-size: 14px; color: #555; }
+            .outcome { font-weight: bold; font-size: 16px; color: #333; }
             @media (max-width: 600px) {
-                .matchup-card {
-                    flex-direction: column;
-                    text-align: center;
-                }
-                .team {
-                    width: 100%;
-                    margin-bottom: 10px;
-                }
+                .matchup-card { flex-direction: column; text-align: center; }
+                .team { width: 100%; margin-bottom: 10px; }
             }
         </style>
     </head>
@@ -123,14 +98,14 @@ def index():
             <div class="matchup-card">
                 <div class="team">
                     <img src="{{ row['Away Logo'] }}" alt="{{ row['Away Team'] }}">
-                    {{ row['Away Team'] }}
-                    {% if row['Away Spread'] %} <div class="spread">({{ row['Away Spread'] }})</div> {% endif %}
+                    {{ row.get('Away Team', 'Away') }}
+                    {% if row['Away Spread'] %}<div class="spread">({{ row['Away Spread'] }})</div>{% endif %}
                 </div>
-                <div class="outcome">→ {{ row['Predicted Outcome'] }}</div>
+                <div class="outcome">→ {{ row.get('Predicted Outcome', '') }}</div>
                 <div class="team">
                     <img src="{{ row['Home Logo'] }}" alt="{{ row['Home Team'] }}">
-                    {{ row['Home Team'] }}
-                    {% if row['Home Spread'] %} <div class="spread">({{ row['Home Spread'] }})</div> {% endif %}
+                    {{ row.get('Home Team', 'Home') }}
+                    {% if row['Home Spread'] %}<div class="spread">({{ row['Home Spread'] }})</div>{% endif %}
                 </div>
             </div>
         {% endfor %}
